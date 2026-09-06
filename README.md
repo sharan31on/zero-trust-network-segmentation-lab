@@ -86,3 +86,55 @@ interface FastEthernet0/5
 interface FastEthernet0/1
  switchport mode trunk
  exit
+
+2. Router Configuration & ACL Policy (Cisco 2911)
+
+enable
+configure terminal
+
+! Sub-Interface Configuration (Router-on-a-Stick)
+interface GigabitEthernet0/0.10
+ encapsulation dot1Q 10
+ ip address 192.168.10.1 255.255.255.0
+ exit
+
+interface GigabitEthernet0/0.20
+ encapsulation dot1Q 20
+ ip address 192.168.20.1 255.255.255.0
+ exit
+
+interface GigabitEthernet0/0.30
+ encapsulation dot1Q 30
+ ip address 192.168.30.1 255.255.255.0
+ exit
+
+interface GigabitEthernet0/0.99
+ encapsulation dot1Q 99
+ ip address 192.168.99.1 255.255.255.0
+ exit
+
+! Enable Parent Physical Interface
+interface GigabitEthernet0/0
+ no shutdown
+ exit
+
+! Extended Access List: Zero Trust Policy
+access-list 110 deny ip 192.168.10.0 0.0.0.255 192.168.20.0 0.0.0.255
+access-list 110 deny ip 192.168.20.0 0.0.0.255 192.168.10.0 0.0.0.255
+access-list 110 deny ip 192.168.99.0 0.0.0.255 192.168.10.0 0.0.0.255
+access-list 110 deny ip 192.168.99.0 0.0.0.255 192.168.20.0 0.0.0.255
+access-list 110 deny ip 192.168.99.0 0.0.0.255 192.168.30.0 0.0.0.255
+access-list 110 permit ip any any
+
+! Bind Inbound ACL to Target Sub-Interfaces
+interface GigabitEthernet0/0.10
+ ip access-group 110 in
+ exit
+
+interface GigabitEthernet0/0.20
+ ip access-group 110 in
+ exit
+
+interface GigabitEthernet0/0.99
+ ip access-group 110 in
+ exit
